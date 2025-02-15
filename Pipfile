@@ -9,6 +9,7 @@ pillow = "*"
 scikit-learn = "*"
 progress = "*"
 tensorflow = "*"
+ghostscript = "*"
 
 [dev-packages]
 

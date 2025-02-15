@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "df0e644147959de955bbe336bb9fe984d993392dd6f210a3030f3fe55ef07218"
+            "sha256": "46380c2655a9ed0486f3a0fc189584ec7d82d2558c4e2cf804a0732b29ccd3ee"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -151,6 +151,14 @@
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==0.6.0"
+        },
+        "ghostscript": {
+            "hashes": [
+                "sha256:97c70e27ba6b1cab4ab1d9b4cc82d89b8b53e57971f608ded4950b8aa20c78a7",
+                "sha256:b7875a87098740eb0be3de2d9662d15db727305ca9a6d4b7534a3cc33a4b965a"
+            ],
+            "index": "pypi",
+            "version": "==0.7"
         },
         "google-pasta": {
             "hashes": [
