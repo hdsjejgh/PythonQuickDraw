@@ -1,3 +1,5 @@
+import numpy
+import json
 from ignorethis import url #url of the training data
 import numpy as np
 import os
@@ -7,28 +9,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #to get rid of the random warnings TF g
 import tensorflow as tf
 from tensorflow.keras.regularizers import l2
 import PIL
-from time import time
 
 
 
-def CreateModel():
-    datas = []
-    labels = []
-    #conversions = {}
-    numInputs = len(os.listdir(url))
-    bar = Bar("Loading Data",max=numInputs)
-    for idx,file in enumerate(os.listdir(url)): #loads all the data
-        data = np.load(os.path.join(url,file))
-        for arr in data[0::33]:
-            arr = arr/255
-            arr = arr.reshape(28,28,1)
-            datas.append(arr)
-            labels.append(idx)
-        #conversions[idx] = file[18:-4]
-        print(f"Dataset {idx+1} loaded")
-        bar.next()
-    bar.finish()
-    print("\nData Loaded")
+
+def CreateModel(datas: list[np.ndarray],labels: list[int], numInputs:int=  len(os.listdir(url))):
+    assert len(datas) == len(labels), "Label and Data tuples of different length"
     #print(len(datas))
     #print(conversions)
     print(datas[1000].shape)
@@ -74,6 +60,30 @@ def CreateModel():
     if input("Save? (Y/N): ").upper()=="Y":
         model.save('model.keras')
 
+def LoadData(url:str, createConv:bool=True) -> tuple[list[numpy.ndarray],list[int]]:
+    datas = []
+    labels = []
+    conversions = {}
+    numInputs = len(os.listdir(url))
+    bar = Bar("Loading Data", max=numInputs)
+    for idx, file in enumerate(os.listdir(url)):  # loads all the data
+        data = np.load(os.path.join(url, file))
+        for arr in data[0::33]:
+            arr = arr / 255
+            arr = arr.reshape(28, 28, 1)
+            datas.append(arr)
+            labels.append(idx)
+        if createConv:
+            conversions[idx] = file[18:-4]
+        print(f"Dataset {idx + 1} loaded")
+        bar.next()
+    bar.finish()
+    print("\nData Loaded")
+    if createConv:
+        with open('conversions.json', "w") as f:
+            json.dump(conversions, f, indent=4)
+    return datas,labels
 
-
-CreateModel()
+if __name__ == '__main__':
+    datas,labels = LoadData(url)
+    CreateModel(datas,labels)

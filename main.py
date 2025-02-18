@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import tkinter as tk
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #to get rid of the random warnings TF gives
 import tensorflow as tf
@@ -13,7 +14,10 @@ from PIL import Image, ImageTk
 
 class QuickDrawApp:
     def __init__(self,time:int=20):
-        self.conversion = {0: 'aircraft carrier', 1: 'banana', 2: 'barn', 3: 'basket', 4: 'bat', 5: 'bracelet', 6: 'bridge', 7: 'bucket', 8: 'cake', 9: 'cow', 10: 'door', 11: 'drill', 12: 'duck', 13: 'ear', 14: 'elbow', 15: 'envelope', 16: 'eraser', 17: 'face', 18: 'fence', 19: 'fire hydrant', 20: 'floor lamp', 21: 'foot', 22: 'fork', 23: 'garden hose', 24: 'garden', 25: 'golf club', 26: 'grass', 27: 'guitar', 28: 'hamburger', 29: 'hand', 30: 'harp', 31: 'headphones', 32: 'hexagon', 33: 'raccoon', 34: 'saxophone', 35: 'scissors', 36: 'shark', 37: 'snowflake', 38: 'squirrel', 39: 'sun', 40: 'sword', 41: 't-shirt', 42: 'telephone', 43: 'The Mona Lisa', 44: 'toaster', 45: 'traffic light', 46: 'trombone', 47: 'wine glass', 48: 'yoga', 49: 'zigzag'} #converts index in probability vector to respective phrase
+        with open('conversions.json', 'r') as f:
+            self.conversion = json.load(f)
+        self.conversion = {int(key):value for key,value in self.conversion.items()}
+        print(self.conversion)
         self.feedbacks = ("I think its a{prediction}.", "Is it a{prediction}?", "It looks like a{prediction}.", "I see a{prediction}.",) #different feedbacks the Machine gives the user
         self.model = False #stores tensorflow model
         self.defaulttime = time
@@ -42,7 +46,7 @@ class QuickDrawApp:
             self.timer.config(text=self.time)
             sleep(1)
             self.time-=1
-            if self.time%1 == 0: #every second, make a guess
+            if self.time%1 == 0 and self.canvas.find_all(): #every second, make a guess
                 p = self.__submit()
                 if p==self.word:
                     p = f"I know, it's {self.word.capitalize()}!"
@@ -84,7 +88,7 @@ class QuickDrawApp:
         self.clear.place(relx=0.91, rely=0.25)
 
         self.timer = tk.Label(self.mainframe, text=self.time, font=("Ink Free", 14), bg="#FFD139", relief="raised",width=4) #timer
-        self.timer.place(relx=0.70, rely=0.76)
+        self.timer.place(relx=0.42, rely=0.76)
         self.timerthread = threading.Thread(target=self.__timer, daemon=True) #thread that manages timer
         self.timerthread.start()
 
