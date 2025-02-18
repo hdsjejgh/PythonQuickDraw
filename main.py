@@ -1,4 +1,5 @@
 import os
+import time
 import tkinter as tk
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' #to get rid of the random warnings TF gives
 import tensorflow as tf
@@ -15,43 +16,55 @@ class QuickDrawApp:
         self.conversion = {0: 'aircraft carrier', 1: 'banana', 2: 'barn', 3: 'basket', 4: 'bat', 5: 'bracelet', 6: 'bridge', 7: 'bucket', 8: 'cake', 9: 'cow', 10: 'door', 11: 'drill', 12: 'duck', 13: 'ear', 14: 'elbow', 15: 'envelope', 16: 'eraser', 17: 'face', 18: 'fence', 19: 'fire hydrant', 20: 'floor lamp', 21: 'foot', 22: 'fork', 23: 'garden hose', 24: 'garden', 25: 'golf club', 26: 'grass', 27: 'guitar', 28: 'hamburger', 29: 'hand', 30: 'harp', 31: 'headphones', 32: 'hexagon', 33: 'raccoon', 34: 'saxophone', 35: 'scissors', 36: 'shark', 37: 'snowflake', 38: 'squirrel', 39: 'sun', 40: 'sword', 41: 't-shirt', 42: 'telephone', 43: 'The Mona Lisa', 44: 'toaster', 45: 'traffic light', 46: 'trombone', 47: 'wine glass', 48: 'yoga', 49: 'zigzag'} #converts index in probability vector to respective phrase
         self.feedbacks = ("I think its a{prediction}.", "Is it a{prediction}?", "It looks like a{prediction}.", "I see a{prediction}.",) #different feedbacks the Machine gives the user
         self.model = False #stores tensorflow model
-        self.time=time #current time
-        self.prediction = None #model's prediction
+        self.defaulttime = time
+        self.time=time
+        self.score=-1
         loadthread = threading.Thread(target=self.__loadModel,daemon=True) #thread for loading model (not sure if it even works??)
         loadthread.start()
-
         self.__initializeWindow()
 
 
     def __loadModel(self):
         self.model = tf.keras.models.load_model('model.keras')
-        print("Done")
 
     def __timer(self):
+        def speak(p):
+            while True:  # says the feedback phrase thing
+                try:
+                    tts = gTTS(p)
+                    os.remove('media/tts.mp3')
+                    tts.save('media/tts.mp3')
+                    playsound('media/tts.mp3')
+                    break
+                except:
+                    pass
         while True:
             self.timer.config(text=self.time)
             sleep(1)
             self.time-=1
-            if self.time%2 == 0: #every other second, make a guess
-                if (p := self.__submit()) != self.prediction:
+            if self.time%1 == 0: #every second, make a guess
+                p = self.__submit()
+                if p==self.word:
+                    p = f"I know, it's {self.word.capitalize()}!"
+                    self.feedback.config(text=p)
+                    speak(p)
+                    self.__newround()
+                    continue
+                if p != self.prediction:
                     self.prediction = p
                     p = random.choice(self.feedbacks).format(prediction=("n " if p[0] in ('a','e','i','o','u') else ' ')+p) #formats the feeback
                     self.feedback.config(text=p) #sets text as feedback
-                    while True: #says the feedback phrase thing
-                        try:
-                            tts = gTTS(p)
-                            os.remove('media/tts.mp3')
-                            tts.save('media/tts.mp3')
-                            playsound('media/tts.mp3')
-                            break
-                        except:
-                            pass
+                    speak(p)
+
+
             if self.time<0: #lose when timer runs out
                 self.__lose()
-                break
+                return
 
     def __lose(self):
-        pass
+        print(f"Score: {self.score}")
+        self.root.destroy()
+
 
     def __initializeWindow(self):
         self.root = tk.Tk()
@@ -67,18 +80,15 @@ class QuickDrawApp:
         self.canvas.bind('<B1-Motion>', self.__draw) #draws on canvas
         self.canvas.place(x=0, rely=0.25)
 
-        self.submit = tk.Button(self.mainframe, text="Submit", font=("Ink Free", 12), width=10, bg="#FFD139",relief='solid', command=self.__submit) #submits drawing for prediction button (ill probably remove it)
-        self.submit.place(relx=0.1, rely=0.75)
-
-        self.clear = tk.Button(self.mainframe, text="X", font=("Ink Free", 14), width=1, bg="#FFD139", relief='solid',command=self.__clear) #clears canvas
-        self.clear.place(relx=0.58, rely=0.75)
+        self.clear = tk.Button(self.mainframe, text="X", font=("Ink Free", 10), width=2, height=1, bg="#FFD139", relief='solid',command=self.__clear) #clears canvas
+        self.clear.place(relx=0.91, rely=0.25)
 
         self.timer = tk.Label(self.mainframe, text=self.time, font=("Ink Free", 14), bg="#FFD139", relief="raised",width=4) #timer
         self.timer.place(relx=0.70, rely=0.76)
-        timerthread = threading.Thread(target=self.__timer, daemon=True) #thread that manages timer
-        timerthread.start()
+        self.timerthread = threading.Thread(target=self.__timer, daemon=True) #thread that manages timer
+        self.timerthread.start()
 
-        self.feedback = tk.Label(self.mainframe, text="FEEDBACK", anchor="center", font=("Ink Free", 15), bg="#FFD139") #feedback given through this label
+        self.feedback = tk.Label(self.mainframe, text="FEEDBACK", anchor="center", font=("Ink Free", 20), bg="#FFD139") #feedback given through this label
         self.feedback.place(relx=.50, rely=0.9, anchor="center")
 
 
@@ -95,6 +105,10 @@ class QuickDrawApp:
         self.root.geometry('256x550')
         self.root.configure()
         self.root.resizable(0, 0) #no resizing
+
+        self.__newround()
+        self.currentWord.config(text=self.word.capitalize())
+
         self.root.mainloop()
 
     def __submit(self) -> str:
@@ -117,6 +131,16 @@ class QuickDrawApp:
     def __clear(self):
         self.canvas.delete('all') #jsust clear the canvas
 
+
+
+    def __newround(self):
+        self.score+=1
+        self.word = random.choice(list(self.conversion.values()))
+        self.currentWord.config(text=self.word.capitalize())
+        self.time = self.defaulttime
+        self.prediction = None
+        self.feedback.config(text="")
+        self.__clear()
 
     def __draw(self,x):
         mouseX=x.x
