@@ -1,0 +1,8 @@
+numpy~=2.0.2
+tensorflow~=2.18.0
+pillow~=11.1.0
+scikit-learn~=1.6.1
+progress~=1.6
+gTTS~=2.5.4
+playsound~=1.2.2
+PyAutoGUI~=0.9.54
