@@ -1,1 +1,1 @@
-WIP Quick Draw in Python
+Quick Draw in Python
